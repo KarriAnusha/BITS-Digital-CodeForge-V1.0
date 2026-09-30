@@ -218,18 +218,18 @@
           <input id="studentId" type="search" autocomplete="off" placeholder="Enter student BITS ID">
         </label>
         <div class="file-upload">
-          <label for="file">Marks workbook <span aria-hidden="true">*</span>
-            <input id="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" aria-describedby="file-name">
+          <label for="file">Student marks file <span aria-hidden="true">*</span>
+            <input id="file" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" aria-describedby="file-name">
           </label>
           <p id="file-name" class="file-name">No workbook uploaded.</p>
           <details class="file-guidance">
             <summary>Marks file format guidance</summary>
-            <div class="format-list" aria-label="Required Excel columns">
+            <div class="format-list" aria-label="Required student marks columns">
               <div><b>BITS ID</b>Student identifier</div>
               <div><b>Course</b>Course name</div>
               <div><b>Total Marks</b>Whole number from 0 to 100</div>
             </div>
-            <p>Use exactly these three columns (the heading "Student's BITS ID" is also accepted). Do not include students receiving NC; only students who appeared should be in the workbook.</p>
+            <p>Use exactly these three columns in the CSV header or first Excel worksheet (the heading "Student's BITS ID" is also accepted). Do not include students receiving NC; only students who appeared should be in the file.</p>
             <button id="templateButton" class="template-button" type="button">Download blank Excel template</button>
           </details>
         </div>
@@ -249,7 +249,7 @@
 
     <section id="emptyState" class="empty-state" aria-live="polite">
       <strong>Ready when your marks are.</strong>
-      Upload a valid Excel workbook and select a course to see its analytics and grade distribution.
+      Upload a valid CSV or Excel file and select a course to see its analytics and grade distribution.
     </section>
 
     <div id="workspace" class="workspace" hidden>
@@ -399,7 +399,7 @@
       elements.courseNote.textContent = "Courses appear after a valid upload.";
       elements.workspace.hidden = true;
       elements.emptyState.hidden = false;
-      elements.emptyState.innerHTML = "<strong>Ready when your marks are.</strong>Upload a valid Excel workbook and select a course to see its analytics and grade distribution.";
+      elements.emptyState.innerHTML = "<strong>Ready when your marks are.</strong>Upload a valid CSV or Excel file and select a course to see its analytics and grade distribution.";
       elements.studentId.value = "";
       elements.studentSearch.value = "";
       elements.gradeGrid.innerHTML = "";
@@ -411,7 +411,7 @@
       const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: true });
       const header = (matrix[0] || []).map(normaliseHeader).filter(Boolean);
       if (header.length !== 3) {
-        throw new Error("The first sheet must contain exactly three non-empty columns: BITS ID, Course, and Total Marks.");
+        throw new Error("The CSV header or first worksheet must contain exactly three non-empty columns: BITS ID, Course, and Total Marks.");
       }
       const map = {};
       for (const column of header) {
@@ -428,14 +428,14 @@
       return map;
     }
 
-    function parseWorkbook(buffer) {
-      if (typeof XLSX === "undefined") throw new Error("The Excel reader did not load. Check your connection and try again.");
+    function parseMarksFile(buffer) {
+      if (typeof XLSX === "undefined") throw new Error("The spreadsheet reader did not load. Check that xlsx.full.min.js is present.");
       const workbook = XLSX.read(buffer, { type: "array" });
-      if (!workbook.SheetNames.length) throw new Error("This workbook has no worksheets.");
+      if (!workbook.SheetNames.length) throw new Error("This file contains no readable data.");
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const map = getWorkbookHeaderMap(sheet);
       const rows = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: true });
-      if (!rows.length) throw new Error("The workbook has headings but no student records.");
+      if (!rows.length) throw new Error("The file has headings but no student records.");
 
       const problems = [];
       const seen = new Set();
@@ -466,18 +466,18 @@
       if (!selectedFile) return;
       const thisUpload = ++uploadVersion;
       const extension = selectedFile.name.split(".").pop().toLowerCase();
-      if (!["xlsx", "xls"].includes(extension)) {
+      if (!["csv", "xlsx", "xls"].includes(extension)) {
         records = [];
         resetViewAfterUpload();
-        elements.fileName.textContent = "No valid workbook loaded.";
+        elements.fileName.textContent = "No valid marks file loaded.";
         elements.fileName.classList.remove("ready");
-        setMessage("Please upload an Excel .xlsx or .xls file.", "error");
+        setMessage("Please upload a .csv, .xlsx, or .xls file.", "error");
         return;
       }
 
-      setMessage("Checking workbook…");
+      setMessage("Checking marks file…");
       try {
-        const parsed = parseWorkbook(await selectedFile.arrayBuffer());
+        const parsed = parseMarksFile(await selectedFile.arrayBuffer());
         if (thisUpload !== uploadVersion) return;
         records = parsed;
         resetViewAfterUpload();
@@ -487,12 +487,12 @@
         elements.courseNote.textContent = `${courses.length} course${courses.length === 1 ? "" : "s"} found. Select one to continue.`;
         elements.fileName.textContent = `${selectedFile.name} · ${records.length} valid student record${records.length === 1 ? "" : "s"}`;
         elements.fileName.classList.add("ready");
-        setMessage("Workbook loaded successfully. Select a course to begin grading.", "success");
+        setMessage("Marks file loaded successfully. Select a course to begin grading.", "success");
       } catch (error) {
         if (thisUpload !== uploadVersion) return;
         records = [];
         resetViewAfterUpload();
-        elements.fileName.textContent = "No valid workbook loaded.";
+        elements.fileName.textContent = "No valid marks file loaded.";
         elements.fileName.classList.remove("ready");
         setMessage(error instanceof Error ? error.message : "The workbook could not be read.", "error");
       }

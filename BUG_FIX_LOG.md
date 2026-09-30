@@ -11,6 +11,7 @@
 | 7 | The timer stayed at 00:00 until its first interval and showed inconsistent elapsed time after repeated downloads. | Open the app or download, modify a range, and download again. | The display was updated only in `setInterval`; download stopped the interval but later elapsed time continued to be calculated. | Timer updates immediately when a course is selected and is frozen consistently at the first finalized export. | Selected a course and verified an immediate 00:00 display; exported, waited, and verified the completion time remains stable. |
 | 8 | CSV values could break columns or be interpreted as spreadsheet formulas. | Use an ID or course containing a quote, comma, or a leading `=`, `+`, `-`, or `@`. | Export concatenated raw strings directly into CSV. | CSV cells are quoted and escaped, and formula-leading text is made literal before download. Blob URLs are also released after use. | Inspected exported CSV for comma/quote escaping and formula-safe values; opened it in a spreadsheet to verify columns remain intact. |
 | 9 | The spreadsheet parser was affected by prototype pollution when processing a crafted workbook (CVE-2023-30533). | Review the parser version used to read uploaded workbooks and compare it with the advisory's affected range. | The app loaded `xlsx@0.18.5` from jsDelivr; SheetJS versions before 0.19.3 are affected. | Replaced the CDN reference with a locally vendored official SheetJS Community Edition `0.20.3` standalone build, which is outside the affected range. | Confirmed the vendored asset identifies as version 0.20.3, updated the page to load it locally, and added a regression check for offline workbook import and template generation. |
+| 10 | Student marks supplied as CSV could not be imported. | Upload a comma-separated file with the required three-column header and valid marks. | The picker and upload validation allowed only `.xlsx` and `.xls`. | Added `.csv` to the upload formats and routed it through the same SheetJS parsing, schema checks, row validation, and course workflow. Student data remains external and is loaded only from the selected file. | Uploaded `test-data/valid-multi-course.csv`; all 9 rows and both courses loaded, then Course A analytics matched the expected values. |
 
 ## Enhancements added
 
@@ -21,6 +22,7 @@
 5. A mobile-friendly layout, visible keyboard focus, semantic labels/live messages, and an export filename based on the selected course.
 6. A README with workbook requirements, usage steps, the deployment URL, and its current password-gate status.
 7. A locally vendored, patched SheetJS `0.20.3` build to replace the vulnerable CDN dependency.
+8. CSV marks-file import using the same validation as Excel uploads; student records remain in uploaded files, not application code.
 
 ## Manual browser smoke test
 

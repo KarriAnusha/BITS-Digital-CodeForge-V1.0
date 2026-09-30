@@ -2,23 +2,23 @@
 
 **Application under test:** `index.html`  
 **Test type:** Manual functional, validation, usability, accessibility, and deployment testing  
-**Recommended browsers:** Latest Chrome or Microsoft Edge with an internet connection (the Excel reader is loaded from a CDN).
+**Recommended browsers:** Latest Chrome or Microsoft Edge. The spreadsheet reader is included locally; no network connection is required to import files or create the Excel template.
 
 ## Test data
 
-Create a workbook named `valid-multi-course.xlsx` with a first worksheet called `Marks` and the following exact data. It makes boundary, analytics, search, and multi-course tests repeatable.
+Use the uploaded test file `test-data/valid-multi-course.csv` for the CSV import and repeatable boundary, analytics, search, and multi-course tests. The app source contains no student records; test rows are kept in this separate CSV fixture. Convert this file to `.xlsx` or `.xls` when testing those formats.
 
 | BITS ID | Course | Total Marks |
 |---|---|---:|
-| `[unique Course A ID 1]` | Course A | 100 |
-| `[unique Course A ID 2]` | Course A | 80 |
-| `[unique Course A ID 3]` | Course A | 79 |
-| `[unique Course A ID 4]` | Course A | 70 |
-| `[unique Course A ID 5]` | Course A | 69 |
-| `[unique Course A ID 6]` | Course A | 50 |
-| `[unique Course A ID 7]` | Course A | 0 |
-| `[unique Course B ID 1]` | Course B | 85 |
-| `[unique Course B ID 2]` | Course B | 64 |
+| `TEST-A-001` | Course A | 100 |
+| `TEST-A-002` | Course A | 80 |
+| `TEST-A-003` | Course A | 79 |
+| `TEST-A-004` | Course A | 70 |
+| `TEST-A-005` | Course A | 69 |
+| `TEST-A-006` | Course A | 50 |
+| `TEST-A-007` | Course A | 0 |
+| `TEST-B-001` | Course B | 85 |
+| `TEST-B-002` | Course B | 64 |
 
 For negative tests, make a copy of this workbook and change only the field named in the test case.
 
@@ -38,10 +38,11 @@ Use this small record with each case during testing.
 | ID | Scenario | Preconditions / test data | Steps | Expected result | Status / notes |
 |---|---|---|---|---|---|
 | TC-01 | Initial load | Open `index.html`. | 1. Load the page. | The upload panel is visible; Course is disabled; the empty state is shown; session time reads `00:00`. | |
-| TC-02 | Download a blank template | Page loaded and internet connection available. | 1. Expand **Marks file requirements and template**. 2. Select **Download blank Excel template**. | An `.xlsx` file downloads with exactly `BITS ID`, `Course`, and `Total Marks` headings. | |
-| TC-03 | Successful `.xlsx` upload | `valid-multi-course.xlsx`. | 1. Upload the workbook. | A success message appears; the browser file control shows the selected filename; Course is enabled and contains Course A and Course B exactly once. | |
-| TC-04 | Successful legacy `.xls` upload | Save the valid sheet as `.xls`. | 1. Upload the `.xls` workbook. | The workbook is accepted with the same course and record results as TC-03. | |
-| TC-05 | Unsupported file type | A `.csv`, `.txt`, or `.pdf` file. | 1. Upload the file. | A clear error states that an `.xlsx` or `.xls` file is required. No previous grading session remains active. | |
+| TC-02 | Download a blank template | Page loaded; network connection is not required. | 1. Expand **Marks file format guidance**. 2. Select **Download blank Excel template**. | An `.xlsx` file downloads with exactly `BITS ID`, `Course`, and `Total Marks` headings. | |
+| TC-03 | Successful CSV upload | `test-data/valid-multi-course.csv`. | 1. Upload the CSV through the file picker. | A success message appears; the file control shows the filename; Course contains Course A and Course B exactly once; all 9 rows are accepted. | |
+| TC-04 | Successful `.xlsx` upload | Convert the CSV test fixture to `.xlsx`. | 1. Upload the workbook. | The workbook is accepted with the same courses and records as TC-03. | |
+| TC-05 | Successful legacy `.xls` upload | Convert the CSV test fixture to `.xls`. | 1. Upload the workbook. | The workbook is accepted with the same courses and records as TC-03. | |
+| TC-46 | Unsupported file type | A `.txt` or `.pdf` file. | 1. Upload the file. | A clear error states that `.csv`, `.xlsx`, or `.xls` is required; no previous grading session remains active. | |
 | TC-06 | Required column aliases | Workbook heading uses `Student's BITS ID` (or curly-apostrophe equivalent), `Course`, and `Total Marks`. | 1. Upload the workbook. | The upload succeeds; the accepted BITS ID alias behaves exactly like `BITS ID`. | |
 | TC-07 | Missing required heading | Replace `Total Marks` with `Score`. | 1. Upload the workbook. | Upload is rejected with an explanation of the required headings. | |
 | TC-08 | Extra non-empty column | Add a fourth heading and values, for example `Email`. | 1. Upload the workbook. | Upload is rejected because exactly three non-empty columns are required. | |
@@ -105,15 +106,16 @@ Use this small record with each case during testing.
 | ID | Scenario | Preconditions / test data | Steps | Expected result | Status / notes |
 |---|---|---|---|---|---|
 | TC-43 | Published URL loads | Use the deployed Netlify URL. | 1. Open the link in a private/incognito window. | The app loads over HTTPS and has the same initial state as TC-01. If the anonymous site has not been claimed, enter its temporary password first. | |
-| TC-44 | Vendored spreadsheet dependency | Project files include `xlsx.full.min.js`; internet access is disabled. | 1. Open `index.html`. 2. Download the blank template. 3. Upload a valid `.xlsx` workbook. | The local SheetJS 0.20.3 build loads without a CDN request; template generation and workbook import work offline. | |
+| TC-44 | Vendored spreadsheet dependency | Project files include `xlsx.full.min.js`; internet access is disabled. | 1. Open `index.html`. 2. Download the blank template. 3. Upload the CSV fixture and a valid `.xlsx` workbook. | The local SheetJS 0.20.3 build loads without a CDN request; template generation and both CSV and workbook imports work offline. | |
 | TC-45 | Shareability after claim | Netlify site has been claimed and made public, if required by account settings. | 1. Open the URL on another device/network. | The app is available without local files, temporary credentials, or a development server. | |
 
 ## Exit criteria
 
 The app is ready to submit when:
 
-- Every critical test (TC-01 to TC-37 and TC-43 to TC-45) passes.
+- Every critical test (TC-01 to TC-37, TC-43 to TC-46) passes.
 - The vendored spreadsheet library passes TC-44 without a network connection.
+- Student test data is read from uploaded files; no student records are hardcoded into `index.html`.
 - Invalid workbooks never replace a previously valid session with corrupt data.
 - A final CSV has been inspected and contains correct grades for every selected-course student.
 - The deployed link is claimed and publicly accessible, if a password-free submission link is required.
