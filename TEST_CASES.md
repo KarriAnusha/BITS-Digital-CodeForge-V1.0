@@ -105,7 +105,7 @@ Use this small record with each case during testing.
 | ID | Scenario | Preconditions / test data | Steps | Expected result | Status / notes |
 |---|---|---|---|---|---|
 | TC-43 | Published URL loads | Use the deployed Netlify URL. | 1. Open the link in a private/incognito window. | The app loads over HTTPS and has the same initial state as TC-01. If the anonymous site has not been claimed, enter its temporary password first. | |
-| TC-44 | CDN dependency | Published site open with internet access. | 1. Download template and upload an `.xlsx` file. | The spreadsheet reader loads successfully; template generation and workbook upload work. | |
+| TC-44 | Vendored spreadsheet dependency | Project files include `xlsx.full.min.js`; internet access is disabled. | 1. Open `index.html`. 2. Download the blank template. 3. Upload a valid `.xlsx` workbook. | The local SheetJS 0.20.3 build loads without a CDN request; template generation and workbook import work offline. | |
 | TC-45 | Shareability after claim | Netlify site has been claimed and made public, if required by account settings. | 1. Open the URL on another device/network. | The app is available without local files, temporary credentials, or a development server. | |
 
 ## Exit criteria
@@ -113,7 +113,7 @@ Use this small record with each case during testing.
 The app is ready to submit when:
 
 - Every critical test (TC-01 to TC-37 and TC-43 to TC-45) passes.
-- No test is blocked by the spreadsheet CDN or deployment configuration.
+- The vendored spreadsheet library passes TC-44 without a network connection.
 - Invalid workbooks never replace a previously valid session with corrupt data.
 - A final CSV has been inspected and contains correct grades for every selected-course student.
 - The deployed link is claimed and publicly accessible, if a password-free submission link is required.

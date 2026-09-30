@@ -10,7 +10,7 @@
 | 6 | Upload guidance said `.xlsx`, while the file picker accepted only `.xls`; files and columns were not fully validated. | Attempt to select an `.xlsx`, a workbook with extra columns, or non-integer/out-of-range marks. | File accept rules and parser trusted the first sheet without validating its schema and values. | The picker accepts `.xlsx` and `.xls`; the importer requires the three prescribed columns, unique course/ID records, and integer marks 0–100 before replacing data. | Tested both extensions and invalid headers, duplicate IDs, blank values, decimals, -1, and 101. Invalid files leave no stale grading session. |
 | 7 | The timer stayed at 00:00 until its first interval and showed inconsistent elapsed time after repeated downloads. | Open the app or download, modify a range, and download again. | The display was updated only in `setInterval`; download stopped the interval but later elapsed time continued to be calculated. | Timer updates immediately when a course is selected and is frozen consistently at the first finalized export. | Selected a course and verified an immediate 00:00 display; exported, waited, and verified the completion time remains stable. |
 | 8 | CSV values could break columns or be interpreted as spreadsheet formulas. | Use an ID or course containing a quote, comma, or a leading `=`, `+`, `-`, or `@`. | Export concatenated raw strings directly into CSV. | CSV cells are quoted and escaped, and formula-leading text is made literal before download. Blob URLs are also released after use. | Inspected exported CSV for comma/quote escaping and formula-safe values; opened it in a spreadsheet to verify columns remain intact. |
-| 9 | The pinned spreadsheet parser has a known vulnerability when processing a crafted workbook (open security issue). | Review the loaded SheetJS version and the advisory for CVE-2023-30533. | The app loads `xlsx@0.18.5`; versions before 0.19.3 are listed as affected by prototype pollution. | Not fixed yet. Upgrade to a maintained, patched spreadsheet library and verify workbook compatibility before processing untrusted files. | Advisory checked against the pinned version; no patched upgrade or remediation test has been completed. |
+| 9 | The spreadsheet parser was affected by prototype pollution when processing a crafted workbook (CVE-2023-30533). | Review the parser version used to read uploaded workbooks and compare it with the advisory's affected range. | The app loaded `xlsx@0.18.5` from jsDelivr; SheetJS versions before 0.19.3 are affected. | Replaced the CDN reference with a locally vendored official SheetJS Community Edition `0.20.3` standalone build, which is outside the affected range. | Confirmed the vendored asset identifies as version 0.20.3, updated the page to load it locally, and added a regression check for offline workbook import and template generation. |
 
 ## Enhancements added
 
@@ -19,15 +19,16 @@
 3. A live student-review table with synchronized Student BITS ID search, so graders can spot-check individual grades before export.
 4. Safer grade-range controls that show the active range, preserve lower adjacent maxima when a minimum moves, and clearly explain why export is unavailable.
 5. A mobile-friendly layout, visible keyboard focus, semantic labels/live messages, and an export filename based on the selected course.
-6. A README with workbook requirements, usage steps, the deployment URL, its current password-gate status, and the open spreadsheet-library security advisory.
+6. A README with workbook requirements, usage steps, the deployment URL, and its current password-gate status.
+7. A locally vendored, patched SheetJS `0.20.3` build to replace the vulnerable CDN dependency.
 
 ## Manual browser smoke test
 
-1. Open `index.html` in a browser with internet access (the Excel reader is loaded from a CDN).
+1. Open `index.html` in a modern browser; the Excel reader is loaded from the local `xlsx.full.min.js` file.
 2. Download the blank template, add a few valid rows in one or more courses, and upload it.
 3. Optionally enter a Student BITS ID, choose a course, verify the overview/statistics/roster, modify ranges, restore defaults, then download CSV.
 4. Repeat with the invalid cases listed in the log to verify the application keeps the previous session cleared and explains the problem.
 
 ## Deployment
 
-The app is static and is published at [https://beautiful-dango-a9b1c2.netlify.app/](https://beautiful-dango-a9b1c2.netlify.app/). The current Netlify deployment displays a password prompt; access requires the site password from its owner. See `README.md` for usage instructions. The deployed app still loads the vulnerable `xlsx@0.18.5` dependency noted in issue 9; avoid using it with untrusted workbooks until that dependency is upgraded.
+The app is static and is published at [https://beautiful-dango-a9b1c2.netlify.app/](https://beautiful-dango-a9b1c2.netlify.app/). The current Netlify deployment displays a password prompt; access requires the site password from its owner. See `README.md` for usage instructions. The source now includes the patched local SheetJS `0.20.3` build, but the existing Netlify deployment remains on its previous build until redeployed.
