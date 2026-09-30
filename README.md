@@ -17,3 +17,7 @@ The Netlify deployment currently displays a password prompt. Use the site passwo
 5. Adjust grade ranges if required. The ranges must be continuous, non-overlapping, and cover every mark from 0 through 100. Use **Reset Ranges** to restore the defaults.
 6. Select **Finalize & download CSV** to export the selected course's grades.
 
+## Testing
+
+To test the app, upload the synthetic sample file [test-data/valid-multi-course.csv](test-data/valid-multi-course.csv). It contains test records for two courses and is separate from the app code.
+
