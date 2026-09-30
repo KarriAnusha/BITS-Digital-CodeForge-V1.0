@@ -161,10 +161,6 @@
     .button:hover:not(:disabled) { background: var(--primary-dark); }
     .button.secondary { background: #e5e7eb; color: #374151; }
     .button.secondary:hover:not(:disabled) { background: #d9dde4; }
-    .timer-wrapper { display: flex; justify-content: center; margin-top: 12px; }
-    .timer-clock { position: relative; width: 90px; height: 90px; }
-    .timer-clock svg { transform: rotate(-90deg); }
-    .timer-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
     .export-note { margin: 6px 0 0; color: var(--muted); font-size: 11px; text-align: center; }
 
     .roster { grid-column: 1 / -1; min-width: 0; margin-top: 0; }
@@ -292,15 +288,6 @@
           <button id="resetRanges" class="button secondary" type="button">Reset Ranges</button>
           <button id="download" class="button" type="button" disabled>Finalize &amp; download CSV</button>
         </div>
-        <div class="timer-wrapper" aria-label="Grading session elapsed time">
-          <div class="timer-clock">
-            <svg width="90" height="90" aria-hidden="true">
-              <circle cx="45" cy="45" r="40" stroke="#ede9fe" stroke-width="6" fill="none"/>
-              <circle id="timerArc" cx="45" cy="45" r="40" stroke="#5b3cc4" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="251"/>
-            </svg>
-            <div id="timerText" class="timer-text">00:00</div>
-          </div>
-        </div>
         <p id="exportNote" class="export-note" aria-live="polite">A download is enabled only when the policy is complete and valid.</p>
       </section>
 
@@ -365,16 +352,11 @@
       studentSearch: document.getElementById("studentSearch"),
       rosterDescription: document.getElementById("rosterDescription"),
       rosterBody: document.getElementById("rosterBody"),
-      timerText: document.getElementById("timerText"),
-      timerArc: document.getElementById("timerArc"),
       templateButton: document.getElementById("templateButton")
     };
 
     let records = [];
     let activeCourse = "";
-    let timerStartedAt = null;
-    let timerInterval = null;
-    let finalisedAt = null;
     let uploadVersion = 0;
 
     function normaliseHeader(value) {
@@ -392,7 +374,6 @@
 
     function resetViewAfterUpload() {
       activeCourse = "";
-      finalisedAt = null;
       elements.welcome.textContent = "";
       elements.course.innerHTML = '<option value="">Select a course to begin</option>';
       elements.course.disabled = true;
@@ -403,8 +384,6 @@
       elements.studentId.value = "";
       elements.studentSearch.value = "";
       elements.gradeGrid.innerHTML = "";
-      stopTimer();
-      updateTimer();
     }
 
     function getWorkbookHeaderMap(sheet) {
@@ -711,33 +690,6 @@
       elements.rosterBody.appendChild(fragment);
     }
 
-    function updateTimer() {
-      const until = finalisedAt ?? Date.now();
-      const seconds = timerStartedAt ? Math.max(0, Math.floor((until - timerStartedAt) / 1000)) : 0;
-      elements.timerText.textContent = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
-      if (elements.timerArc) {
-        const circumference = 2 * Math.PI * 40;
-        const progress = timerStartedAt ? Math.min((until - timerStartedAt) / 3600000, 1) : 0;
-        elements.timerArc.style.strokeDasharray = String(circumference);
-        elements.timerArc.style.strokeDashoffset = String(circumference * (1 - progress));
-      }
-    }
-
-    function startTimer(reset = false) {
-      if (timerStartedAt && !reset) return;
-      clearInterval(timerInterval);
-      timerStartedAt = Date.now();
-      finalisedAt = null;
-      updateTimer();
-      timerInterval = window.setInterval(updateTimer, 1000);
-    }
-
-    function stopTimer() {
-      clearInterval(timerInterval);
-      timerInterval = null;
-      timerStartedAt = null;
-    }
-
     function safeCsvCell(value) {
       let text = String(value ?? "");
       if (/^[=+\-@]/.test(text)) text = `'${text}`;
@@ -751,12 +703,8 @@
         updateAll();
         return;
       }
-      finalisedAt ??= Date.now();
-      updateTimer();
-      clearInterval(timerInterval);
       const rows = [
         ["Course", activeCourse],
-        ["Grading session time", elements.timerText.textContent],
         [],
         ["BITS ID", "Total Marks", "Grade"],
         ...selectedRecords().map(record => [record.id, record.marks, getGrade(record.marks, ranges)])
@@ -771,7 +719,7 @@
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(link.href), 0);
-      elements.exportNote.textContent = `Final grades exported for ${activeCourse}. Session completed in ${elements.timerText.textContent}.`;
+      elements.exportNote.textContent = `Final grades exported for ${activeCourse}.`;
     }
 
     function resetRanges() {
@@ -786,12 +734,10 @@
       const selected = elements.course.value;
       if (!selected) return;
       activeCourse = selected;
-      finalisedAt = null;
       elements.workspace.hidden = false;
       elements.emptyState.hidden = true;
       elements.studentSearch.value = elements.studentId.value;
       buildGradeControls();
-      startTimer(true);
       elements.welcome.textContent = `${activeCourse} selected. Review and finalize grading.`;
       setMessage("");
       updateAll();
