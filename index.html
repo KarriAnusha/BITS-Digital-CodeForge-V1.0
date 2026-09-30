@@ -221,7 +221,7 @@
           <label for="file">Student marks file <span aria-hidden="true">*</span>
             <input id="file" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" aria-describedby="file-name">
           </label>
-          <p id="file-name" class="file-name">No workbook uploaded.</p>
+          <p id="file-name" class="file-name">No marks file uploaded.</p>
           <details class="file-guidance">
             <summary>Marks file format guidance</summary>
             <div class="format-list" aria-label="Required student marks columns">
@@ -494,7 +494,7 @@
         resetViewAfterUpload();
         elements.fileName.textContent = "No valid marks file loaded.";
         elements.fileName.classList.remove("ready");
-        setMessage(error instanceof Error ? error.message : "The workbook could not be read.", "error");
+        setMessage(error instanceof Error ? error.message : "The marks file could not be read.", "error");
       }
     }
 
