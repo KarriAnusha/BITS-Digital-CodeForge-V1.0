@@ -20,7 +20,7 @@
 3. A live student-review table with synchronized Student BITS ID search, so graders can spot-check individual grades before export.
 4. Safer grade-range controls that show the active range, preserve lower adjacent maxima when a minimum moves, and clearly explain why export is unavailable.
 5. A mobile-friendly layout, visible keyboard focus, semantic labels/live messages, and an export filename based on the selected course.
-6. A README with workbook requirements, usage steps, the deployment URL, and its current password-gate status.
+6. A README with file requirements, usage steps, the deployment URL and its current password-gate status, plus a testing note directing users to the synthetic `test-data/valid-multi-course.csv` fixture.
 7. A locally vendored, patched SheetJS `0.20.3` build to replace the vulnerable CDN dependency.
 8. CSV marks-file import using the same validation as Excel uploads; student records remain in uploaded files, not application code.
 
