@@ -4,7 +4,7 @@ A browser-based grading console for reviewing course marks, configuring grade ra
 
 ## App Deployment
 
-[Open the grading console](https://beautiful-dango-a9b1c2.netlify.app/)
+[Open the grading console](https://students-grade-analyser.netlify.app/)
 
 The Netlify deployment currently displays a password prompt. Use the site password provided by the site owner.
 
